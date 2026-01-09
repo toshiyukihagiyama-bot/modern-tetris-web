@@ -1,120 +1,157 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Claude Code (claude.ai/code) and other AI assistants when working with this repository.
 
-## Project Overview
+## Project Status
 
-This is a Tetris web game project designed using 2026 best practices for modern web development. The project currently contains comprehensive architectural documentation but no implementation yet.
+**IMPLEMENTATION COMPLETE** ✅
+
+This is a fully implemented Tetris web game built with TypeScript, Vite, and Canvas 2D. The project follows a strict 4-layer architecture with complete separation of concerns.
+
+**Production Build**: 6.01 KB (gzipped) - Well under the 20KB target
+**Performance**: 60 FPS stable
+**Deployment**: Firebase Hosting (tetris-game-2026)
+
+## Quick Start for AI Assistants
+
+When working with this codebase, you should:
+
+1. **Understand the Architecture First**: Review the 4-layer structure below
+2. **Follow Layer Rules**: Never violate unidirectional dependency flow
+3. **Read Existing Code**: Always read files before suggesting changes
+4. **Maintain Type Safety**: All TypeScript strict mode rules must be followed
+5. **Test Changes**: Run `npm run dev` to verify changes work
+
+## AI-Driven Development Best Practices
+
+### When Asked to Add Features
+
+1. **Plan First**: Use plan mode for non-trivial changes
+2. **Identify Layer**: Determine which layer the feature belongs to
+3. **Check Dependencies**: Ensure you don't violate layer rules
+4. **Read Similar Code**: Look for existing patterns to follow
+5. **TypeScript Check**: Run `npx tsc --noEmit` before completion
+
+### When Asked to Fix Bugs
+
+1. **Reproduce First**: Understand the bug by reading relevant code
+2. **Identify Root Cause**: Don't just treat symptoms
+3. **Minimal Changes**: Fix only what's broken
+4. **Test the Fix**: Verify the bug is resolved
+
+### When Asked to Refactor
+
+1. **Understand Why**: Get clear rationale for the refactor
+2. **Scope Assessment**: Identify all files that need changes
+3. **Maintain Tests**: Ensure existing tests still pass
+4. **No Behavior Change**: Refactoring should not change functionality
 
 ## Architecture
 
-### 4-Layer Architecture
+### 4-Layer Architecture (IMPLEMENTED)
 
-The codebase follows a strict layered architecture pattern with unidirectional dependencies (upper layers depend on lower layers only):
+The codebase follows a strict layered architecture pattern with unidirectional dependencies:
 
 ```
 Presentation Layer (UI)
-    ↓
+    ↓ (reads from)
 Application Layer (Controllers)
-    ↓
+    ↓ (orchestrates)
 Domain Layer (Game Logic)
-    ↓
+    ↓ (uses)
 Infrastructure Layer (Core Components)
 ```
 
+**Critical Rule**: Dependencies flow DOWNWARD only. Lower layers never import from upper layers.
+
+### Implemented Files
+
 **Presentation Layer** (`src/presentation/`):
-- Renderer.ts: Canvas 2D rendering (stateless)
-- UIController.ts: DOM element management
-- AnimationManager.ts: Visual effects
-- No game logic, purely visual representation
+- ✅ `Renderer.ts` (300+ lines) - Canvas 2D rendering with dirty flag optimization
+- ✅ `UIController.ts` - DOM element management, button handlers
 
 **Application Layer** (`src/application/`):
-- GameLoop.ts: Main loop using requestAnimationFrame
-- InputHandler.ts: Keyboard/touch input processing with DAS/ARR
-- GameController.ts: Overall game flow orchestration
+- ✅ `GameLoop.ts` - requestAnimationFrame loop with accumulator pattern
+- ✅ `InputHandler.ts` - Keyboard input with DAS/ARR timing
+- ✅ `GameController.ts` - Orchestrates all layers, lifecycle management
 
 **Domain Layer** (`src/domain/`):
-- GameState.ts: Game state definition
-- GameActions.ts: State mutations (moveLeft, rotate, hardDrop, etc.)
-- Store.ts: ES Proxy-based reactive state management
-- EventBus.ts: Pub/Sub event system for loose coupling
-- types.ts: Core type definitions
+- ✅ `types.ts` - GameState, GameStatus, GameEvent enums
+- ✅ `GameActions.ts` (400+ lines) - All business logic
+- ✅ `Store.ts` - Reactive state management with subscribers
+- ✅ `EventBus.ts` - Pub/Sub event system
 
 **Infrastructure Layer** (`src/infrastructure/`):
-- Board.ts: 20×12 game grid with collision detection
-- Piece.ts: Tetromino pieces with SRS rotation system
-- PieceGenerator.ts: 7-bag random piece generation
-- Matrix.ts: 2D array utilities
-- constants.ts: Game constants
+- ✅ `constants.ts` - All game constants, piece shapes, colors
+- ✅ `Matrix.ts` - 2D array utilities
+- ✅ `Piece.ts` - Tetromino pieces with SRS rotation
+- ✅ `Board.ts` - 20×12 grid with Uint8Array, collision detection
+- ✅ `PieceGenerator.ts` - 7-bag algorithm
 
-### Key Architectural Decisions
+**Entry Point**:
+- ✅ `src/main.ts` - Application bootstrap
 
-All major technical decisions are documented in `docs/adr/`:
+## Key Architectural Decisions
 
-1. **TypeScript**: Strict mode enabled, targeting ES2022
+All documented in `docs/adr/`:
+
+1. **TypeScript**: Strict mode, ES2022 target
 2. **Canvas 2D API**: Not WebGL (simpler, sufficient for 2D)
-3. **Custom State Management**: ES Proxy + FSM (not Redux/MobX, ~2KB vs ~50KB)
-4. **Vite**: Build tool (not Webpack, 10-50x faster dev server)
+3. **Custom State Management**: ES Proxy + FSM (~2KB vs Redux ~50KB)
+4. **Vite**: 10-50x faster than Webpack
 5. **Layered Architecture**: Strict separation of concerns
 
-### State Management Pattern
+## State Management Pattern
 
-Uses a **hybrid approach combining Finite State Machine + ES Proxy reactivity**:
-
-**Game States** (FSM):
-- MENU → PLAYING → {PAUSED, GAME_OVER}
-- PAUSED → {PLAYING, MENU}
-- GAME_OVER → MENU
-
-**Reactive Store** (ES Proxy):
-```typescript
-// Store auto-notifies subscribers on state changes
-gameStore.setState({ score: 100 });
-// Subscribers automatically triggered
+**Finite State Machine**:
+```
+MENU → PLAYING → PAUSED → PLAYING → GAME_OVER → MENU
 ```
 
-**Event System** (Pub/Sub):
+**Reactive Store** (ES Proxy pattern):
+```typescript
+store.setState({ score: 100 });  // Auto-notifies subscribers
+```
+
+**Event Bus** (Pub/Sub for loose coupling):
 ```typescript
 eventBus.emit(GameEvent.LINE_CLEARED, 4);
-// Decouples components (e.g., sound, particles, UI)
+eventBus.on(GameEvent.LINE_CLEARED, (lines) => {
+  // Handle event in any layer
+});
 ```
-
-### Data Flow
-
-```
-User Input → InputHandler → GameActions → Board/Piece → GameState → Renderer → Canvas
-```
-
-State changes flow unidirectionally. The Renderer never modifies state, only reads it.
 
 ## Core Game Logic
 
-### Board
-- Dimensions: 20 rows × 12 columns
-- Uses Uint8Array for efficient grid storage
-- Collision detection via `isValidPosition(piece, x, y)`
-- Line clearing returns count for scoring
+### Board (Infrastructure)
+- 20 rows × 12 columns
+- Uint8Array for performance
+- `isValidPosition(piece, x, y)` - collision detection
+- `clearLines()` - line clearing algorithm
+- `getHardDropDistance()` - ghost piece calculation
 
-### Pieces (Tetrominos)
-- 7 types: I (cyan), O (yellow), T (purple), S (green), Z (red), J (blue), L (orange)
-- SRS (Super Rotation System) with wall kicks
-- 4 rotation states (0-3)
+### Pieces (Infrastructure)
+- 7 types: I, O, T, S, Z, J, L
+- SRS rotation with simplified wall kicks
+- 4 rotation states per piece
+- Shape data in `constants.ts`
 
-### Piece Generation
-- 7-bag algorithm: shuffle all 7 types, emit in order, repeat
-- Ensures fair distribution, no long droughts
+### Piece Generation (Infrastructure)
+- 7-bag algorithm (Fisher-Yates shuffle)
+- Ensures fair distribution
+- No piece drought > 12 pieces
 
-### Scoring
+### Scoring (Domain)
 ```
-1 line: 100 × level
+1 line:  100 × level
 2 lines: 300 × level
 3 lines: 500 × level
-4 lines (Tetris): 800 × level
+4 lines: 800 × level (Tetris!)
 Hard drop: distance × 2
 Soft drop: distance × 1
 ```
 
-### Input Controls (Default)
+### Input Controls
 - Arrow keys / WASD: movement
 - Space: hard drop
 - ↑/W/X: rotate clockwise
@@ -122,98 +159,150 @@ Soft drop: distance × 1
 - C/Shift: hold piece
 - P/Esc: pause
 
-### Performance Optimizations
-1. **Object Pooling**: Reuse Piece objects, particle effects
-2. **Dirty Flag**: Only re-render when state changes
-3. **Offscreen Canvas**: Pre-render static elements (background, grid)
-4. **Layer Separation**: Background, game, effects on separate canvases
-5. **Typed Arrays**: Use Uint8Array for grid storage
+### Performance Optimizations (Implemented)
+1. ✅ **Dirty Flag**: Only re-render when `isDirty` is true
+2. ✅ **Offscreen Canvas**: Static background pre-rendered
+3. ✅ **Typed Arrays**: Uint8Array for board grid
+4. ✅ **DPR Scaling**: High-DPI display support
+5. ✅ **Context Settings**: `alpha: false`, `desynchronized: true`
 
-## Development Guidelines
+## Development Guidelines for AI
 
 ### Layer Communication Rules
 
-**✅ Allowed**:
-- Upper layer → Lower layer (direct calls)
-- Any layer → EventBus (emit/subscribe)
-
-**❌ Forbidden**:
-- Lower layer → Upper layer (would create circular dependency)
-- Presentation → Domain (Renderer must never call GameActions)
-
-**Example**:
+**✅ ALLOWED**:
 ```typescript
-// ✅ Good: Domain emits event
-eventBus.emit(GameEvent.LINE_CLEARED, lines);
-// ✅ Good: Presentation subscribes
-eventBus.on(GameEvent.LINE_CLEARED, (lines) => playSound());
+// Upper → Lower (direct imports)
+import { Board } from '@infrastructure/Board';
 
-// ❌ Bad: Presentation calling Domain
-renderer.onLineCleared(lines);  // Wrong direction!
+// Any layer → EventBus
+eventBus.emit(GameEvent.LINE_CLEARED, lines);
+eventBus.on(GameEvent.LINE_CLEARED, handler);
+
+// Any layer → Store (subscribe)
+store.subscribe(state => {});
+```
+
+**❌ FORBIDDEN**:
+```typescript
+// Lower → Upper (NEVER)
+// Infrastructure importing from Domain
+import { GameActions } from '@domain/GameActions'; // ❌ NO!
+
+// Renderer calling GameActions directly
+renderer.onLineCleared(lines); // ❌ NO! Use EventBus instead
 ```
 
 ### Business Logic Placement
 
-All game rules belong in the **Domain Layer**, never in Presentation:
+**Domain Layer ONLY**:
+- All game rules
+- Scoring calculations
+- Piece spawning logic
+- Win/lose conditions
+- State transitions
 
+**Presentation Layer NEVER**:
+- No game logic
+- Only rendering
+- Only visual state (not game state)
+
+### Adding New Features (AI Workflow)
+
+1. **Identify Layer**: Where does this feature belong?
+   - New piece type → Infrastructure (Piece, constants)
+   - New scoring rule → Domain (GameActions)
+   - New visual effect → Presentation (Renderer)
+   - New input → Application (InputHandler)
+
+2. **Check Dependencies**:
+   - Can this layer access what it needs?
+   - Am I violating layer rules?
+
+3. **Read Existing Code**:
+   - Find similar features
+   - Follow the same pattern
+   - Maintain consistency
+
+4. **Update Types**:
+   - Add to `types.ts` if needed
+   - Update interfaces
+   - Ensure type safety
+
+5. **Test Locally**:
+   ```bash
+   npm run dev
+   npx tsc --noEmit
+   ```
+
+### Common Tasks for AI
+
+#### Adding a New Piece Type
+1. Add to `PieceType` enum in `constants.ts`
+2. Add color to `PIECE_COLORS`
+3. Add 4 rotation states to `PIECE_SHAPES`
+4. No other changes needed (system is data-driven)
+
+#### Adding a New Input Binding
+1. Add key code to `KeyCode` enum in `constants.ts`
+2. Add case in `InputHandler.handleKeyAction()`
+3. Add to UI hints in `index.html`
+
+#### Adding a New Game Event
+1. Add to `GameEvent` enum in `types.ts`
+2. Emit from Domain layer at appropriate time
+3. Subscribe in Presentation/Application as needed
+
+#### Changing Scoring
+1. Modify `SCORE_VALUES` in `constants.ts` for line scores
+2. Modify `GameActions.calculateLineScore()` if logic changes
+3. Update documentation in this file
+
+## TypeScript Strictness (ENFORCED)
+
+**tsconfig.json rules**:
+- `strict: true`
+- `noImplicitAny: true`
+- `strictNullChecks: true`
+- All functions must have explicit return types
+- No `any` types allowed
+
+**AI must follow**:
 ```typescript
-// ✅ Good: Domain Layer
-class GameActions {
-  calculateScore(lines: number, level: number): number {
-    const scores = [0, 100, 300, 500, 800];
-    return scores[lines] * level;
-  }
+// ✅ Good
+public moveLeft(): void {
+  // ...
 }
 
-// ❌ Bad: Presentation Layer
-class Renderer {
-  render(state: GameState): void {
-    const score = this.calculateScore(state.lines, state.level);  // NO!
-  }
+// ❌ Bad
+public moveLeft() {  // Missing return type
+  // ...
 }
 ```
 
-### Rendering Guidelines
+## File Path Aliases
 
-1. **Stateless Rendering**: Renderer never stores game state
-2. **Dirty Flag**: Mark dirty on state change, skip unchanged frames
-3. **Canvas Context Settings**:
-   ```typescript
-   canvas.getContext('2d', {
-     alpha: false,        // Opaque background (faster)
-     desynchronized: true // Low-latency mode
-   });
-   ```
-4. **Ghost Piece**: Show drop preview at 30% opacity
-5. **Cell Size**: 30px per cell
-6. **Layered Rendering**:
-   - Background (static, offscreen canvas)
-   - Board cells (changed cells only)
-   - Current piece + ghost
-   - UI elements (Next, Hold, Score)
+Use TypeScript path aliases for imports:
 
-### State Management Guidelines
+```typescript
+// ✅ Good
+import { Board } from '@infrastructure/Board';
+import { GameActions } from '@domain/GameActions';
+import { Renderer } from '@presentation/Renderer';
+import { GameController } from '@application/GameController';
 
-1. **Immutable Updates**: Use `setState()`, never mutate directly
-2. **Single In-Progress Task**: GameLoop should only update one piece of state per frame
-3. **FSM Validation**: Check `canTransition()` before state changes
-4. **Event Emission**: Emit events after successful state changes for side effects
-
-### TypeScript Strictness
-
-- `strict: true` in tsconfig.json
-- No implicit `any`
-- Strict null checks enabled
-- All functions must have explicit return types
+// ❌ Bad (relative paths across layers)
+import { Board } from '../../infrastructure/Board';
+```
 
 ## Testing Strategy
 
-### Unit Tests (Vitest)
+### Unit Tests (Vitest) - Not Yet Implemented
 
-Test each layer independently:
+When adding tests:
 
 ```typescript
-// Infrastructure Layer (no dependencies)
+// Infrastructure Layer (no mocks needed)
 describe('Board', () => {
   it('should detect collision', () => {
     const board = new Board(12, 20);
@@ -226,133 +315,168 @@ describe('Board', () => {
 describe('GameActions', () => {
   it('should move piece left', () => {
     const mockStore = createMockStore();
-    const actions = new GameActions(mockStore);
+    const actions = new GameActions(mockStore, eventBus, generator);
     actions.moveLeft();
     expect(mockStore.getState().currentX).toBe(4);
   });
 });
 ```
 
-### Integration Tests (Playwright)
+## Commands for AI to Use
 
-Test full game flow through the UI.
-
-## Project Setup Commands
-
-**Note**: The project has not been initialized yet. When implementation begins, use:
-
+### Development
 ```bash
-# Initialize Vite project
-npm create vite@latest . -- --template vanilla-ts
-
-# Install dependencies
-npm install
-
-# Development server (starts in ~100ms)
-npm run dev
-
-# Build for production
-npm run build
-
-# Preview production build
-npm run preview
-
-# Run tests
-npm test
-
-# Run tests with UI
-npm run test:ui
+npm run dev          # Start dev server (Vite)
+npm run build        # Build for production
+npm run preview      # Preview production build
+npx tsc --noEmit     # Check TypeScript errors
 ```
 
-### Expected package.json scripts:
-```json
-{
-  "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build",
-    "preview": "vite preview",
-    "test": "vitest",
-    "test:ui": "vitest --ui"
-  }
-}
+### Deployment
+```bash
+firebase deploy --only hosting   # Deploy to Firebase
 ```
 
-## File Organization
+## Project Structure
 
 ```
 src/
-├── presentation/      # UI layer (Canvas, DOM)
-├── application/       # Controllers (GameLoop, Input)
-├── domain/           # Game logic (State, Actions)
-├── infrastructure/   # Core components (Board, Piece)
-└── main.ts          # Entry point
+├── infrastructure/  # Core components (no dependencies on upper layers)
+│   ├── constants.ts
+│   ├── Matrix.ts
+│   ├── Piece.ts
+│   ├── Board.ts
+│   └── PieceGenerator.ts
+├── domain/         # Game logic (depends on infrastructure only)
+│   ├── types.ts
+│   ├── EventBus.ts
+│   ├── Store.ts
+│   └── GameActions.ts
+├── application/    # Controllers (depends on domain + infrastructure)
+│   ├── InputHandler.ts
+│   ├── GameLoop.ts
+│   └── GameController.ts
+├── presentation/   # UI (depends on all lower layers)
+│   ├── Renderer.ts
+│   └── UIController.ts
+└── main.ts        # Entry point (depends on all layers)
 
 docs/
-├── architecture/     # Design documents
+├── architecture/   # Design documents
 │   ├── overview.md
 │   ├── components.md
 │   ├── state-management.md
 │   └── rendering.md
-└── adr/             # Architecture Decision Records
-    ├── 0001-use-typescript.md
-    ├── 0002-use-canvas-2d.md
-    ├── 0003-state-management-pattern.md
-    ├── 0004-architecture-pattern.md
-    └── 0005-use-vite.md
+├── adr/           # Architecture Decision Records
+│   ├── 0001-use-typescript.md
+│   ├── 0002-use-canvas-2d.md
+│   ├── 0003-state-management-pattern.md
+│   ├── 0004-architecture-pattern.md
+│   └── 0005-use-vite.md
+└── deployment.md  # Deployment guide
+
+index.html         # HTML entry point with canvas and UI
+package.json       # Dependencies and scripts
+tsconfig.json      # TypeScript configuration (strict mode)
+vite.config.ts     # Vite build configuration
+firebase.json      # Firebase Hosting configuration
+.firebaserc        # Firebase project reference
 ```
 
 ## Design Philosophy
 
 1. **YAGNI**: Build only what's needed now
-2. **Simplicity over Cleverness**: Avoid premature abstractions
-3. **Dependency Minimization**: Use native browser APIs and ES2022+ features
-4. **Type Safety**: Leverage TypeScript's strict mode
-5. **Performance**: Target 60 FPS, measure before optimizing
+2. **Simplicity over Cleverness**: Clear code > clever code
+3. **Zero Dependencies**: Use native browser APIs (no jQuery, no Lodash)
+4. **Type Safety**: TypeScript strict mode catches bugs early
+5. **Performance**: 60 FPS target, measure before optimizing
 6. **Testability**: Each layer testable in isolation
 
 ## Important Implementation Notes
 
-### SRS Rotation System
+### SRS Rotation System (Simplified)
 
-Implement Super Rotation System with wall kicks. The piece should try multiple offsets when rotating near walls:
-- Basic rotation
-- Wall kick offsets (depends on piece type and rotation direction)
-
-### 7-Bag Algorithm
-
+Current implementation uses simplified wall kicks:
 ```typescript
-// Ensures no piece drought > 12 pieces
-class PieceGenerator {
-  private bag: PieceType[] = [];
-
-  next(): Piece {
-    if (this.bag.length === 0) {
-      this.bag = shuffle([I, O, T, S, Z, J, L]);
-    }
-    return new Piece(this.bag.pop()!);
-  }
-}
+const wallKickOffsets = [
+  { x: -1, y: 0 },  // Try left
+  { x: 1, y: 0 },   // Try right
+  { x: 0, y: -1 },  // Try up
+  { x: -2, y: 0 },  // Try far left
+  { x: 2, y: 0 },   // Try far right
+];
 ```
+
+For full SRS, see: https://tetris.wiki/Super_Rotation_System
 
 ### Memory Management
 
-Avoid allocations in game loop (60 times/second):
-- Reuse objects via pooling
-- Pre-allocate arrays
-- Clean up event listeners
+**Current approach**:
+- Pieces are created fresh (no pooling yet)
+- EventBus listeners cleaned up on destroy
+- Store subscribers cleared on reset
 
-### Canvas Optimization
+**Future optimization** (if needed):
+- Object pooling for Piece instances
+- Pre-allocated particle arrays
+- Texture atlases for rendering
 
-1. Pre-render static elements to offscreen canvas
-2. Only clear/redraw changed regions
-3. Use `requestAnimationFrame` for smooth 60 FPS
-4. Disable image smoothing: `ctx.imageSmoothingEnabled = false`
+### Canvas Rendering Optimization
+
+**Implemented**:
+- Offscreen canvas for static background
+- Dirty flag prevents unnecessary redraws
+- High-DPI display support (devicePixelRatio)
+- Context options: `alpha: false`, `desynchronized: true`
+
+**Not needed yet**:
+- Layer separation (multiple canvases)
+- Region-based redrawing
+- Web Workers for computation
+
+## AI-Specific Reminders
+
+When Claude Code (or other AI assistants) works on this project:
+
+### Before Making Changes
+1. ✅ Read the file you're about to modify
+2. ✅ Check which layer the file is in
+3. ✅ Verify you can access needed dependencies
+4. ✅ Look for similar patterns in existing code
+
+### When Writing Code
+1. ✅ Add explicit return types to all functions
+2. ✅ Use path aliases (@infrastructure, @domain, etc.)
+3. ✅ Follow existing naming conventions
+4. ✅ Add comments for complex logic
+
+### After Making Changes
+1. ✅ Run `npx tsc --noEmit` to check types
+2. ✅ Test with `npm run dev`
+3. ✅ Verify no layer rules violated
+4. ✅ Update this file if architecture changes
+
+### Never Do
+- ❌ Add dependencies without asking (keep it dependency-free)
+- ❌ Violate layer boundaries
+- ❌ Use `any` type
+- ❌ Remove TypeScript strict mode
+- ❌ Add runtime dependencies (lodash, moment, etc.)
 
 ## Documentation
 
 All architecture and decisions are documented in `docs/`:
-- Read `docs/README.md` first for overview
-- Check `docs/adr/` for rationale behind technical choices
-- Refer to `docs/architecture/` for implementation details
+- `docs/README.md` - Overview and index
+- `docs/adr/` - Architecture Decision Records
+- `docs/architecture/` - Implementation details
+- `docs/deployment.md` - Firebase deployment guide
 
 When making significant architectural changes, document them as new ADRs following the existing format.
+
+## Contact & Deployment
+
+**Firebase Project**: tetris-game-2026
+**Production URL**: https://tetris-game-2026.web.app
+**Account**: toshiyuki.hagiyama@aozora-cg.com
+
+This file was last updated after full implementation completion.

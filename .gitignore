@@ -40,3 +40,8 @@ coverage/
 *.tmp
 *.temp
 .cache/
+
+# Firebase
+.firebase/
+firebase-debug.log
+firebase-debug.*.log
