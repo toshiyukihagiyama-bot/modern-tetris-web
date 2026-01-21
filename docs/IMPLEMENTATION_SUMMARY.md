@@ -243,7 +243,7 @@ import { GameController } from '@application/GameController';
 ### Firebase Hosting Setup
 
 ✅ **Configuration complete**:
-- Firebase project: `tetris-game-2026`
+- Firebase project: `modern-tetris-2026`
 - Hosting directory: `dist/`
 - SPA rewrites configured
 - Cache headers set (1 year for assets)
@@ -264,7 +264,7 @@ dist/assets/index-CMjmuzIx.js  21.25 kB │ gzip: 6.01 kB
 firebase deploy --only hosting
 ```
 
-**Production URL**: https://tetris-game-2026.web.app
+**Production URL**: https://modern-tetris-2026.web.app
 
 ## Future Enhancements (Not Implemented)
 

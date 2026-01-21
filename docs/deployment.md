@@ -2,7 +2,7 @@
 
 ## プロジェクト情報
 
-- **プロジェクトID**: `tetris-game-2026`
+- **プロジェクトID**: `modern-tetris-2026`
 - **プロジェクト名**: Tetris Game 2026
 - **ホスティング**: Firebase Hosting
 - **アカウント**: toshiyuki.hagiyama@aozora-cg.com
@@ -51,10 +51,10 @@ firebase deploy --only hosting
 
 デプロイが成功すると、以下のようなURLでアクセスできます：
 
-- **Hosting URL**: https://tetris-game-2026.web.app
-- **カスタムドメイン**: https://tetris-game-2026.firebaseapp.com
+- **Hosting URL**: https://modern-tetris-2026.web.app
+- **カスタムドメイン**: https://modern-tetris-2026.firebaseapp.com
 
-Firebase Console: https://console.firebase.google.com/project/tetris-game-2026
+Firebase Console: https://console.firebase.google.com/project/modern-tetris-2026
 
 ## クイックデプロイコマンド
 
@@ -133,4 +133,4 @@ Firebase Hosting の無料枠：
 
 - [Firebase Hosting ドキュメント](https://firebase.google.com/docs/hosting)
 - [Firebase Console](https://console.firebase.google.com/)
-- [使用状況の確認](https://console.firebase.google.com/project/tetris-game-2026/usage)
+- [使用状況の確認](https://console.firebase.google.com/project/modern-tetris-2026/usage)

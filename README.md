@@ -15,11 +15,11 @@ This is a production-ready Tetris game with:
 - **Bundle Size**: 6.01 KB (gzipped) - Well under the 20KB target
 - **Performance**: Stable 60 FPS with dirty flag rendering
 - **Type Safety**: 100% TypeScript strict mode, zero type errors
-- **Deployment**: Firebase Hosting ([Play Now](https://tetris-game-2026.web.app))
+- **Deployment**: Firebase Hosting ([Play Now](https://modern-tetris-2026.web.app))
 
 ## 🎮 Play Now
 
-**Live Demo**: [https://tetris-game-2026.web.app](https://tetris-game-2026.web.app)
+**Live Demo**: [https://modern-tetris-2026.web.app](https://modern-tetris-2026.web.app)
 
 Or run locally:
 ```bash
@@ -118,8 +118,8 @@ See [docs/adr/](docs/adr/) for detailed Architecture Decision Records.
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/tetris-game-2026.git
-cd tetris-game-2026
+git clone https://github.com/yourusername/modern-tetris-2026.git
+cd modern-tetris-2026
 
 # Install dependencies
 npm install
@@ -321,8 +321,8 @@ MIT License - See [LICENSE](LICENSE) for details
 
 ## 🔗 Links
 
-- **Live Demo**: [https://tetris-game-2026.web.app](https://tetris-game-2026.web.app)
-- **Firebase Console**: [tetris-game-2026](https://console.firebase.google.com/project/tetris-game-2026)
+- **Live Demo**: [https://modern-tetris-2026.web.app](https://modern-tetris-2026.web.app)
+- **Firebase Console**: [modern-tetris-2026](https://console.firebase.google.com/project/modern-tetris-2026)
 - **Documentation**: [docs/](docs/)
 - **AI Guide**: [CLAUDE.md](CLAUDE.md)
 

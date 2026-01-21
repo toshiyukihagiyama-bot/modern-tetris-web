@@ -10,7 +10,7 @@ This is a fully implemented Tetris web game built with TypeScript, Vite, and Can
 
 **Production Build**: 6.01 KB (gzipped) - Well under the 20KB target
 **Performance**: 60 FPS stable
-**Deployment**: Firebase Hosting (tetris-game-2026)
+**Deployment**: Firebase Hosting (modern-tetris-2026)
 
 ## Quick Start for AI Assistants
 
@@ -475,8 +475,8 @@ When making significant architectural changes, document them as new ADRs followi
 
 ## Contact & Deployment
 
-**Firebase Project**: tetris-game-2026
-**Production URL**: https://tetris-game-2026.web.app
+**Firebase Project**: modern-tetris-2026
+**Production URL**: https://modern-tetris-2026.web.app
 **Account**: toshiyuki.hagiyama@aozora-cg.com
 
 This file was last updated after full implementation completion.
